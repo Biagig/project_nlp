@@ -98,6 +98,7 @@ class SkipGram:
         self.id2word = {}
         self.word2occurences = {}
         self.word2negative_sampling_probabilities = {}
+        self.proba_density = [0]
         self.trainset = []  # set of sentences
         self.trainWords = 0
         self.accLoss = 0
@@ -125,6 +126,9 @@ class SkipGram:
         self.word2negative_sampling_probabilities = dict(
             zip(self.word2occurences.keys(), negative_sample_proba)
         )
+        for i in range(len(self.vocab)):
+            self.proba_density.append(self.proba_density[-1]
+                                      +self.word2negative_sampling_probabilities[self.id2word[i]])
 
         train_ratio = 0.8
         self.trainset = sentences[0 : int(train_ratio * len(sentences))]
@@ -168,6 +172,30 @@ class SkipGram:
             random_values = random_values[1:]
             negative_ids.append(id_not_omitted[cursor_proba])
 
+        return negative_ids
+
+    def sample2(self,omit_ids,n_samplings=5):
+        random_values = list(np.random.rand(n_samplings))
+        negative_ids = []
+        n_tot = len(self.vocab)
+        n = n_tot//2
+        n_min=0
+        n_max = n_tot
+        
+        while random_values!=[]:
+            if self.proba_density[n]<random_values[0] and self.proba_density[n+1]>random_values[0]:
+                if n in omit_ids:
+                    random_values[0] = np.random.rand()
+                else:
+                    negative_ids.append(n)
+                    n_min = 0
+                    n_max = n_tot
+                    del(random_values[0])
+            elif self.proba_density[n]<random_values[0]:
+                n_min = n
+            else:
+                n_max = n
+            n = (n_min+n_max)//2
         return negative_ids
 
     def train(self):
