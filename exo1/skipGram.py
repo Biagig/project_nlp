@@ -10,6 +10,7 @@ from sklearn.preprocessing import normalize
 
 # our imports
 import json
+import time
 
 __authors__ = ["Johnny Chen", "Guillaume Biagi"]
 __emails__ = []
@@ -171,7 +172,13 @@ class SkipGram:
                     ctxtId = self.word2id[context_word]
                     if ctxtId == word_id:
                         continue
+
+                    start = time.time()
                     negativeIds = self.sample({word_id, ctxtId})
+                    end = time.time()
+                    print(
+                        f"sampling took {round(end - start, 2)} s | {round((end - start) * 1000, 2)} ms"
+                    )
 
                     self.trainWord(word_id, ctxtId, negativeIds)
                     self.trainWords += 1
@@ -280,7 +287,12 @@ if __name__ == "__main__":
 
         sentences = text2sentences(text_path)
         sg = SkipGram(sentences)
+        start = time.time()
         sg.train()
+        end = time.time()
+        print(
+            f"The training took {round(end - start, 2)} s | {round((end - start) / 60)} min"
+        )
         sg.save(opts.model or "params/")
 
     else:
